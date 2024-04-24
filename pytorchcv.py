@@ -9,25 +9,22 @@ import torchvision
 from torchvision.transforms import ToTensor
 import matplotlib.pyplot as plt
 import numpy as np
-from PIL import Image
-import glob
-import os
-import zipfile 
 
+# GPU 사용 없다면 CPU
 default_device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-# Python에서 MNIST 데이터셋을 불러와서 처리하는 과정
-# 이 함수를 실행하면, builtins 모듈을 통해 전역 변수로 설정된 data_train, data_test, train_loader, test_loader가 생성되어 어디서든 접근할 수 있게 됩니다. 이러한 설정은 함수 내에서 데이터를 처리하고, 이후에 다른 부분에서 해당 데이터를 사용할 때 유용하게 활용될 수 있음
 
+# Fashion MNIST 데이터셋을 불러와서 처리하는 과정
+# builtins 모듈을 통해 전역 변수로 설정된 data_train, data_test, train_loader, test_loader가 생성되어 어디서든 접근할 수 있게 됩니다.
 def load_mnist(batch_size=64): # load_mnist라는 이름의 함수를 정의하고, 이 함수는 기본적으로 batch_size 매개변수를 64로 설정합니다. 이 매개변수는 데이터를 얼마나 많은 단위로 나눌지 결정
     builtins.train_data = torchvision.datasets.FashionMNIST('./data', download=True, train=True, transform=ToTensor()) # torchvision 라이브러리의 datasets 모듈을 사용하여 MNIST 데이터셋을 불러옵니다. './data'는 데이터셋이 저장될 경로를 지정하며, download=True는 해당 경로에 데이터가 없을 경우 인터넷에서 자동으로 다운로드하도록 설정합니다. train=True는 학습용 데이터셋을 불러오는 것을 의미하고, transform=ToTensor()는 데이터셋의 이미지들을 파이토치 텐서로 변환하는 함수를 적용
     builtins.test_data = torchvision.datasets.FashionMNIST('./data', download=True, train=False, transform=ToTensor()) # 테스트 데이터셋을 불러오는 코드입니다. train=False로 설정하여 학습용이 아닌 테스트용 데이터셋을 불러옴
     builtins.train_loader = torch.utils.data.DataLoader(train_data, batch_size=batch_size) # 학습 데이터셋을 데이터 로더에 로드합니다. 데이터 로더는 데이터셋을 지정된 배치 크기에 맞게 나누고, 이를 반복 가능한 객체로 만들어 학습 과정에서 쉽게 사용할 수 있게 도움
     builtins.test_loader = torch.utils.data.DataLoader(test_data, batch_size=batch_size)
 
+
 # 신경망을 한 에폭(epoch) 동안 학습하는 과정을 구현한 Python 함수
 # 이 함수는 모델을 학습시키고, 각 배치에서의 평균 손실과 정확도를 계산하여 반환하는데 이를 통해 학습 과정을 모니터링할 수 있음
-
 def train_epoch(net,dataloader,lr=0.01,optimizer=None,loss_fn = nn.NLLLoss()): # 이 함수는 여러 매개변수를 받는데, net은 학습할 신경망 모델, dataloader는 데이터 로더, lr은 학습률(기본값 0.01), optimizer는 최적화 도구(기본값은 None), loss_fn은 손실 함수로 기본적으로 Negative Log Likelihood Loss를 사용
     optimizer = optimizer or torch.optim.Adam(net.parameters(),lr=lr) # 최적화 도구가 제공되지 않았다면, Adam 최적화 도구를 사용하여 신경망의 매개변수를 최적화하며, 학습률은 lr로 설정
     net.train() # 모델을 학습 모드로 설정합니다. 이는 일부 신경망 계층(예: 드롭아웃 계층)이 학습과 평가 모드에서 다르게 동작하기 때문에 필요
@@ -76,8 +73,8 @@ def train(net,train_loader,test_loader,optimizer=None,lr=0.01,epochs=10,loss_fn=
         res['val_acc'].append(va)
     return res # 학습과 검증 과정에서의 결과를 담은 딕셔너리를 반환
 
-# 신경망 모델을 학습하면서 주기적으로 학습 상태를 출력하고, 각 에폭의 끝에서 검증 성능을 출력하는 Python 함수
 
+# 신경망 모델을 학습하면서 주기적으로 학습 상태를 출력하고, 각 에폭의 끝에서 검증 성능을 출력하는 Python 함수
 def train_long(net,train_loader,test_loader,epochs=5,lr=0.01,optimizer=None,loss_fn = nn.NLLLoss(),print_freq=10): # train_long 함수를 정의 - net: 학습할 신경망 모델; train_loader, test_loader: 각각 학습과 검증 데이터를 로드하는 데 사용되는 데이터 로더; epochs: 전체 학습을 반복할 횟수, 기본값은 5; lr: 학습률, 기본값은 0.01; optimizer: 최적화 도구, 기본적으로 None이며, 제공되지 않았을 경우 Adam 최적화 도구를 사용; loss_fn: 손실 함수, 기본값은 Negative Log Likelihood Loss); print_freq: 학습 상태를 출력할 빈도
     optimizer = optimizer or torch.optim.Adam(net.parameters(),lr=lr) # 최적화 도구가 제공되지 않은 경우, Adam 최적화 도구를 사용
     for epoch in range(epochs): # 지정된 횟수만큼 에폭을 반복
@@ -99,8 +96,8 @@ def train_long(net,train_loader,test_loader,epochs=5,lr=0.01,optimizer=None,loss
         vl,va = validate(net,test_loader,loss_fn) # 에폭이 끝날 때마다 검증 함수를 호출하여 검증 손실과 정확도를 계산
         print("Epoch {} done, validation acc = {}, validation loss = {}".format(epoch,va,vl)) # 에폭의 학습 결과와 검증 결과를 출력
 
-# 학습 및 검증 데이터에 대한 정확도와 손실을 시각화하는 Python 함수인데 Matplotlib 라이브러리를 사용하여 결과를 그래프로 표시
 
+# 학습 및 검증 데이터에 대한 정확도와 손실을 시각화하는 Python 함수인데 Matplotlib 라이브러리를 사용하여 결과를 그래프로 표시
 def plot_results(hist): # plot_results라는 함수를 정의하는데 hist라는 이름의 딕셔너리를 매개변수로 받는데 학습과 검증 과정의 정확도와 손실이 배열 형태로 저장되어 있음
     plt.figure(figsize=(15,5)) # 새로운 그래프 창을 만들고, 크기를 가로 15인치, 세로 5인치로 설정
     plt.subplot(121) # 두 개의 그래프를 나란히 표시하기 위해 첫 번째 위치(1행 2열의 첫 번째)에 서브플롯을 생성
@@ -112,8 +109,8 @@ def plot_results(hist): # plot_results라는 함수를 정의하는데 hist라�
     plt.plot(hist['test_loss'], label='Testing loss') # hist 딕셔너리에서 검증 손실(val_loss)을 추출하여 그래프로 그리는데 라벨을 'Validation loss'로 지정
     plt.legend() # 그래프에 범례를 추가
 
-# 컨볼루션(Convolution) 연산을 시각화하는 함수 plot_convolution을 정의하는데 특정 커널을 사용하여 이미지에 적용한 결과를 보여줌 
 
+# 컨볼루션(Convolution) 연산을 시각화하는 함수 plot_convolution을 정의하는데 특정 커널을 사용하여 이미지에 적용한 결과를 보여줌 
 def plot_convolution(t,title=''): # 함수를 정의하고, 두 개의 매개변수를 받는데 t: 컨볼루션 연산에 사용될 커널의 텐서이고 title: 그래프의 상단에 표시될 제목인데 기본값은 빈 문자열
     with torch.no_grad(): # 이 블록 내에서는 PyTorch의 자동 미분 기능을 비활성화하여, 연산에 대한 기울기 계산을 수행하지 않는데 메모리 사용을 줄이고 연산 속도를 향상
         c = nn.Conv2d(kernel_size=(3,3),out_channels=1,in_channels=1) # 3x3 크기의 커널을 사용하는 2D 컨볼루션 레이어를 생성하는데 입력 채널과 출력 채널이 모두 1
@@ -132,8 +129,8 @@ def plot_convolution(t,title=''): # 함수를 정의하고, 두 개의 매개변
         #plt.tight_layout()
         plt.show() # 그래프를 표시
 
-# 주어진 데이터셋에서 이미지를 선택하여 시각화하는 Python 함수 display_dataset을 정의하는데 이미지 데이터셋, 표시할 이미지의 수, 그리고 선택적으로 클래스 레이블을 포함할 수 있음
 
+# 주어진 데이터셋에서 이미지를 선택하여 시각화하는 Python 함수 display_dataset을 정의하는데 이미지 데이터셋, 표시할 이미지의 수, 그리고 선택적으로 클래스 레이블을 포함할 수 있음
 def display_dataset(dataset, n=10,classes=None): # display_dataset 함수를 정의하며, 매개변수로는 dataset (이미지와 레이블을 포함하는 데이터셋), n (표시할 이미지 수, 기본값은 10), classes (클래스 레이블 이름 배열, 선택적)를 받음
     fig,ax = plt.subplots(1,n,figsize=(15,3)) # 1행 n열의 서브플롯을 생성하고, 전체 그래프의 크기를 가로 15인치, 세로 3인치로 설정
     mn = min([dataset[i][0].min() for i in range(n)]) # 데이터셋에서 선택된 이미지들 중 픽셀 값의 최소값을 계산하는데 값은 이미지 정규화에 사용
